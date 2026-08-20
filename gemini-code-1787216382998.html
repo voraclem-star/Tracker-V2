@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Health & Weight Loss Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-10">
+
+  <div class="max-w-4xl mx-auto px-4 py-6 space-y-6">
+    <header class="text-center">
+      <h1 class="text-3xl font-bold text-slate-900">Health & Fitness Tracker</h1>
+      <p class="text-slate-500 text-sm mt-1">Goal: Healthy BMI (18.5 – 24.9) | Height: 173 cm</p>
+    </header>
+
+    <!-- Top Chart Visualizer -->
+    <div class="bg-white rounded-xl shadow-md p-5 border border-slate-200">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 id="chartTitle" class="text-lg font-semibold text-slate-700">Weight Progress</h2>
+        <!-- Chart Toggle Buttons -->
+        <div class="inline-flex rounded-lg bg-slate-100 p-1 text-xs font-medium">
+          <button onclick="switchChart('weight')" id="btn-weight" class="chart-btn px-3 py-1.5 rounded-md bg-white shadow text-indigo-600">Weight</button>
+          <button onclick="switchChart('bmi')" id="btn-bmi" class="chart-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-indigo-600">BMI</button>
+          <button onclick="switchChart('bp')" id="btn-bp" class="chart-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-indigo-600">Blood Pressure</button>
+          <button onclick="switchChart('exercise')" id="btn-exercise" class="chart-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-indigo-600">Exercise</button>
+        </div>
+      </div>
+      <div class="relative h-64 w-full flex items-center justify-center">
+        <canvas id="healthChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <span class="text-xs text-slate-400 font-bold uppercase">Current Weight</span>
+        <p id="statWeight" class="text-2xl font-extrabold text-slate-800 mt-1">--</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <span class="text-xs text-slate-400 font-bold uppercase">Current BMI</span>
+        <p id="statBMI" class="text-2xl font-extrabold text-indigo-600 mt-1">--</p>
+        <span id="statBMILabel" class="text-xs font-semibold text-slate-400">No logs yet</span>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <span class="text-xs text-slate-400 font-bold uppercase">Target Weight</span>
+        <p class="text-2xl font-extrabold text-emerald-600 mt-1">74.5 kg</p>
+        <span class="text-xs text-slate-400">BMI 24.9</span>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <span class="text-xs text-slate-400 font-bold uppercase">To Lose</span>
+        <p id="statToLose" class="text-2xl font-extrabold text-amber-500 mt-1">--</p>
+      </div>
+    </div>
+
+    <!-- Separate Entry Forms -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <!-- 1. Weight Form -->
+      <div class="bg-white rounded-xl shadow-md p-5 border border-slate-200 flex flex-col justify-between">
+        <h3 class="text-md font-semibold text-indigo-600 mb-3 flex items-center gap-2">
+          <span>⚖️</span> Log Weight
+        </h3>
+        <form onsubmit="handleWeightSubmit(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Date</label>
+            <input type="date" id="weightDate" required class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Weight (kg)</label>
+            <input type="number" step="0.1" id="inputWeight" placeholder="e.g. 91.0" required class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-lg transition-colors text-sm shadow">Save Weight</button>
+        </form>
+      </div>
+
+      <!-- 2. Blood Pressure Form -->
+      <div class="bg-white rounded-xl shadow-md p-5 border border-slate-200 flex flex-col justify-between">
+        <h3 class="text-md font-semibold text-rose-600 mb-3 flex items-center gap-2">
+          <span>❤️</span> Log Blood Pressure
+        </h3>
+        <form onsubmit="handleBPSubmit(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Date</label>
+            <input type="date" id="bpDate" required class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-rose-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Systolic / Diastolic</label>
+            <div class="flex gap-2">
+              <input type="number" id="inputSys" placeholder="120" required class="w-1/2 border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-rose-500 outline-none">
+              <input type="number" id="inputDia" placeholder="80" required class="w-1/2 border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-rose-500 outline-none">
+            </div>
+          </div>
+          <button type="submit" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-medium py-2 rounded-lg transition-colors text-sm shadow">Save BP</button>
+        </form>
+      </div>
+
+      <!-- 3. Exercise Form -->
+      <div class="bg-white rounded-xl shadow-md p-5 border border-slate-200 flex flex-col justify-between">
+        <h3 class="text-md font-semibold text-emerald-600 mb-3 flex items-center gap-2">
+          <span>🏃</span> Log Workout
+        </h3>
+        <form onsubmit="handleExerciseSubmit(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Date</label>
+            <input type="date" id="exerciseDate" required class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Duration (Minutes)</label>
+            <input type="number" id="inputExercise" placeholder="e.g. 45" required class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+          </div>
+          <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 rounded-lg transition-colors text-sm shadow">Save Workout</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const HEIGHT_M = 1.73;
+    let activeMetric = 'weight';
+    let chartInstance = null;
+
+    // Independent data arrays stored locally
+    let weightLogs = JSON.parse(localStorage.getItem('weightLogs')) || [];
+    let bpLogs = JSON.parse(localStorage.getItem('bpLogs')) || [];
+    let exerciseLogs = JSON.parse(localStorage.getItem('exerciseLogs')) || [];
+
+    // Set default dates to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('weightDate').value = today;
+    document.getElementById('bpDate').value = today;
+    document.getElementById('exerciseDate').value = today;
+
+    function calculateBMI(weight) {
+      return (weight / (HEIGHT_M * HEIGHT_M)).toFixed(1);
+    }
+
+    function getBMICategory(bmi) {
+      if (bmi < 18.5) return { label: 'Underweight', color: 'text-amber-500' };
+      if (bmi <= 24.9) return { label: 'Healthy', color: 'text-emerald-500' };
+      if (bmi <= 29.9) return { label: 'Overweight', color: 'text-amber-500' };
+      return { label: 'Obese', color: 'text-rose-500' };
+    }
+
+    function updateStats() {
+      if (weightLogs.length === 0) {
+        document.getElementById('statWeight').innerText = '--';
+        document.getElementById('statBMI').innerText = '--';
+        document.getElementById('statBMILabel').innerText = 'No logs yet';
+        document.getElementById('statBMILabel').className = 'text-xs font-semibold text-slate-400';
+        document.getElementById('statToLose').innerText = '--';
+        return;
+      }
+
+      const latest = weightLogs[weightLogs.length - 1];
+      const bmi = calculateBMI(latest.weight);
+      const category = getBMICategory(bmi);
+      
+      document.getElementById('statWeight').innerText = `${latest.weight} kg`;
+      document.getElementById('statBMI').innerText = bmi;
+      
+      const labelEl = document.getElementById('statBMILabel');
+      labelEl.innerText = category.label;
+      labelEl.className = `text-xs font-semibold ${category.color}`;
+
+      const toLose = (latest.weight - 74.5).toFixed(1);
+      document.getElementById('statToLose').innerText = toLose > 0 ? `${toLose} kg` : 'Target Reached!';
+    }
+
+    function renderChart() {
+      const ctx = document.getElementById('healthChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+
+      let dataset = [];
+      let dates = [];
+
+      if (activeMetric === 'weight') {
+        dates = weightLogs.map(l => l.date);
+        dataset = [{
+          label: 'Weight (kg)',
+          data: weightLogs.map(l => l.weight),
+          borderColor: '#6366f1',
+          backgroundColor: 'rgba(99, 102, 241, 0.1)',
+          fill: true,
+          tension: 0.3
+        }];
+      } else if (activeMetric === 'bmi') {
+        dates = weightLogs.map(l => l.date);
+        dataset = [{
+          label: 'BMI',
+          data: weightLogs.map(l => calculateBMI(l.weight)),
+          borderColor: '#8b5cf6',
+          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          fill: true,
+          tension: 0.3
+        }];
+      } else if (activeMetric === 'bp') {
+        dates = bpLogs.map(l => l.date);
+        dataset = [
+          { label: 'Systolic (mmHg)', data: bpLogs.map(l => l.sys), borderColor: '#ef4444', tension: 0.3 },
+          { label: 'Diastolic (mmHg)', data: bpLogs.map(l => l.dia), borderColor: '#3b82f6', tension: 0.3 }
+        ];
+      } else if (activeMetric === 'exercise') {
+        dates = exerciseLogs.map(l => l.date);
+        dataset = [{
+          type: 'bar',
+          label: 'Exercise (Mins)',
+          data: exerciseLogs.map(l => l.exercise),
+          backgroundColor: '#10b981'
+        }];
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: activeMetric === 'exercise' ? 'bar' : 'line',
+        data: { labels: dates, datasets: dataset },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: true, position: 'bottom' } },
+          scales: { y: { beginAtZero: activeMetric === 'exercise' } }
+        }
+      });
+    }
+
+    function switchChart(metric) {
+      activeMetric = metric;
+      document.querySelectorAll('.chart-btn').forEach(btn => {
+        btn.classList.remove('bg-white', 'shadow', 'text-indigo-600');
+        btn.classList.add('text-slate-600');
+      });
+      const activeBtn = document.getElementById(`btn-${metric}`);
+      activeBtn.classList.add('bg-white', 'shadow', 'text-indigo-600');
+      activeBtn.classList.remove('text-slate-600');
+
+      const titles = { weight: 'Weight Progress', bmi: 'BMI Trend', bp: 'Blood Pressure', exercise: 'Exercise Logs' };
+      document.getElementById('chartTitle').innerText = titles[metric];
+
+      renderChart();
+    }
+
+    // Submit Handlers
+    function handleWeightSubmit(e) {
+      e.preventDefault();
+      const date = document.getElementById('weightDate').value;
+      const weight = parseFloat(document.getElementById('inputWeight').value);
+
+      weightLogs.push({ date, weight });
+      weightLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
+      localStorage.setItem('weightLogs', JSON.stringify(weightLogs));
+
+      document.getElementById('inputWeight').value = '';
+      updateStats();
+      if (activeMetric === 'weight' || activeMetric === 'bmi') renderChart();
+    }
+
+    function handleBPSubmit(e) {
+      e.preventDefault();
+      const date = document.getElementById('bpDate').value;
+      const sys = parseInt(document.getElementById('inputSys').value);
+      const dia = parseInt(document.getElementById('inputDia').value);
+
+      bpLogs.push({ date, sys, dia });
+      bpLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
+      localStorage.setItem('bpLogs', JSON.stringify(bpLogs));
+
+      document.getElementById('inputSys').value = '';
+      document.getElementById('inputDia').value = '';
+      if (activeMetric === 'bp') renderChart();
+    }
+
+    function handleExerciseSubmit(e) {
+      e.preventDefault();
+      const date = document.getElementById('exerciseDate').value;
+      const exercise = parseInt(document.getElementById('inputExercise').value);
+
+      exerciseLogs.push({ date, exercise });
+      exerciseLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
+      localStorage.setItem('exerciseLogs', JSON.stringify(exerciseLogs));
+
+      document.getElementById('inputExercise').value = '';
+      if (activeMetric === 'exercise') renderChart();
+    }
+
+    // Initialize
+    updateStats();
+    renderChart();
+  </script>
+</body>
+</html>
